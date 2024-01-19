@@ -21,13 +21,6 @@ func isBinary(filePath string) bool {
 	if err != nil {
 		return false
 	}
-
-	for _, b := range buffer {
-		if b == 0 {
-			return true // Null byte indicates a binary file
-		}
-	}
-
 	return false
 }
 
