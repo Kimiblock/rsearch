@@ -3,11 +3,15 @@ package main
 import (
 	"bufio"
 	"fmt"
+	"golang.org/x/text/encoding/unicode"
+	"golang.org/x/text/transform"
 	"os"
 	"path/filepath"
 	"regexp"
 	"strings"
 )
+
+const maxTokenSize = 128 * 1024
 
 func isBinary(filePath string) bool {
 	file, err := os.Open(filePath)
@@ -24,9 +28,23 @@ func isBinary(filePath string) bool {
 	return false
 }
 
+func isUTF8(filePath string) bool {
+	file, err := os.Open(filePath)
+	if err != nil {
+		return false
+	}
+	defer file.Close()
+
+	// Use the golang.org/x/text/encoding/unicode package to detect UTF-8 encoding
+	decoder := unicode.UTF8.NewDecoder()
+	_, err = transform.NewReader(file, decoder).Read(make([]byte, 512))
+
+	return err == nil
+}
+
 func searchInFile(filePath, searchWord string) error {
-	if isBinary(filePath) {
-		return nil // Skip binary files
+	if isBinary(filePath) || !isUTF8(filePath) {
+		return nil // Skip binary or non-UTF-8 files
 	}
 
 	file, err := os.Open(filePath)
@@ -36,15 +54,15 @@ func searchInFile(filePath, searchWord string) error {
 	defer file.Close()
 
 	lineNumber := 0
-	scanner := bufio.NewScanner(file)
-	// Increase the buffer size to handle longer lines
-	const maxTokenSize = 128 * 1024
-	buf := make([]byte, maxTokenSize)
-	scanner.Buffer(buf, maxTokenSize)
+	reader := bufio.NewReader(file)
 
-	for scanner.Scan() {
+	for {
+		line, err := reader.ReadString('\n')
+		if err != nil {
+			break
+		}
 		lineNumber++
-		line := scanner.Text()
+
 		if strings.Contains(line, searchWord) {
 			// Use regular expression to find and highlight the search word
 			re := regexp.MustCompile(searchWord)
@@ -57,10 +75,6 @@ func searchInFile(filePath, searchWord string) error {
 			fmt.Printf("Hit:  %s\n", highlightedLine)
 			fmt.Println(strings.Repeat("-", 40))
 		}
-	}
-
-	if err := scanner.Err(); err != nil {
-		return err
 	}
 
 	return nil
