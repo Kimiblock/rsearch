@@ -38,7 +38,7 @@ func searchInFile(filePath, searchWord string) error {
 	lineNumber := 0
 	scanner := bufio.NewScanner(file)
 	// Increase the buffer size to handle longer lines
-	const maxTokenSize = 512 * 10240
+	const maxTokenSize = 128 * 1024
 	buf := make([]byte, maxTokenSize)
 	scanner.Buffer(buf, maxTokenSize)
 
