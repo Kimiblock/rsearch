@@ -5,7 +5,7 @@
 # Package
 AUR: [rsearch-git](https://aur.archlinux.org/packages/rsearch-git)
 
-# Useage
+# Usage
 
 ```bash
 rsearch <Path> <Search Target>
